@@ -6,7 +6,8 @@
 #include "string.h"
 typedef buffer_info_t SERVO_COMM_RINGS_BUFF_STRUCT;
 static int line_count = 0;
-static SERVO_COMM_RINGS_BUFF_STRUCT *local_buff;
+static SERVO_COMM_RINGS_BUFF_STRUCT *local_buff_info;
+static char *local_buff;
 
 static void controller_parase_cmd(char *buff, int len)
 {
@@ -163,17 +164,17 @@ void *controller_msg_process(void *p)
 {
     //pthread_detach(pthread_self());
     char buff[BUFF_SIZE] = {0};
-    shmem_get(&local_buff);
+    shmem_get(&local_buff_info,&local_buff);
     int res = 0;
     while(1)
     {
         res = 0;
-        while(is_buff_empty(local_buff))
+        while(is_buff_empty(local_buff_info))
         {
             //printf("controller idle!\n");
             pthread_yield();
         }
-        res = pull_circle_buff_item(local_buff,buff);
+        res = pull_circle_buff_item(local_buff_info,local_buff,buff);
 
         printf("receive cmd:%d\n",*((int*)buff));
         if(res<0)

@@ -4,7 +4,10 @@
 #include "mmap_comm.h"
 
 static SERVO_COMM_RINGS_BUFF_STRUCT *circle_buff_cmd_info;
+static char *circle_buff_cmd;
+
 static SERVO_COMM_RINGS_BUFF_STRUCT *circle_buff_res_info;
+static char *circle_buff_res;
 
 static int *para_update_flag;
 static PARA_READ_INFO_t *para_info;
@@ -22,7 +25,8 @@ void Force_Servo_Comm_Init(void)
     para_info = (PARA_READ_INFO_t*)(mmap_ptr->para_ptr+8);
 
     circle_buff_cmd_info = (SERVO_COMM_RINGS_BUFF_STRUCT*)mmap_ptr->ins_ctrl_ptr;
-    circle_buff_cmd_info->buff = (char *)mmap_ptr->ins_msg_ptr;
+    circle_buff_cmd = (char *)mmap_ptr->ins_msg_ptr;
+
     circle_buff_cmd_info->element_length = sizeof(FORCE_INSTRUCTION_INFO_t);
     circle_buff_cmd_info->buff_length = MESAGE_BUFF_LENGTH;
     circle_buff_cmd_info->semaphore = 1;
@@ -34,7 +38,7 @@ void Force_Servo_Comm_Init(void)
     circle_buff_res_info = (SERVO_COMM_RINGS_BUFF_STRUCT*)mmap_ptr->res_ctrl_ptr;
     circle_buff_res_info->element_length = sizeof(FORCE_BACK_INFO_t);
     circle_buff_res_info->buff_length = MESAGE_BUFF_LENGTH;
-    circle_buff_res_info->buff = (char*)mmap_ptr->res_msg_ptr;
+    circle_buff_res = (char*)mmap_ptr->res_msg_ptr;
     printf("comm init ok!\n");
 }
 
@@ -162,13 +166,13 @@ int Force_Servo_Comm_Set_Instruct(FORCE_INSTRUCTION_INFO_t *push_ptr,int32_t len
         return -1;
     }
 
-    res = push_circle_buff_item(circle_buff_cmd_info, push_ptr, length);
+    res = push_circle_buff_item(circle_buff_cmd_info, circle_buff_cmd, push_ptr);
     return res;
 }
 
 int Force_Servo_Comm_Get_Result(FORCE_BACK_INFO_t *pull_ptr)
 {
     int res = 0;
-    res = pull_circle_buff_item(circle_buff_res_info, pull_ptr);
+    res = pull_circle_buff_item(circle_buff_res_info, circle_buff_res, pull_ptr);
     return res;
 }

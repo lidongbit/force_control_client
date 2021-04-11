@@ -17,8 +17,8 @@
 
 
 
-static DEBUG_RINGS_BUFF_STRUCT *local_buff;
-
+static DEBUG_RINGS_BUFF_STRUCT *local_buff_info;
+static char *local_buff;
 static void *shm_ctrl;
 static void *shm_msg;
 static int shmid_ctrl,shmid_msg;  //创建共享内存
@@ -42,13 +42,13 @@ void shmem_init(void )
        exit(EXIT_FAILURE);
     }
     printf("Memory attached at 0x%X,0x%X\n", (int)shm_ctrl,(int)shm_msg);    //设置共享内存
-    local_buff = (DEBUG_RINGS_BUFF_STRUCT*)shm_ctrl;
-    local_buff->head_index_offset = 0;
-    local_buff->tail_index_offset = 0;
-    local_buff->element_length = CLIENT_BUFF_SIZE;
-    local_buff->buff_length = MAX_SIZE;
-    local_buff->semaphore = 1;
-    local_buff->buff = (char*)shm_msg;
+    local_buff_info = (DEBUG_RINGS_BUFF_STRUCT*)shm_ctrl;
+    local_buff_info->head_index_offset = 0;
+    local_buff_info->tail_index_offset = 0;
+    local_buff_info->element_length = CLIENT_BUFF_SIZE;
+    local_buff_info->buff_length = MAX_SIZE;
+    local_buff_info->semaphore = 1;
+    local_buff = (char*)shm_msg;
     printf("shmem init ok!\n");
 }
 
@@ -61,7 +61,8 @@ void shmem_close(void)
     }
 }
 
-void shmem_get(DEBUG_RINGS_BUFF_STRUCT **ptr)
+void shmem_get(DEBUG_RINGS_BUFF_STRUCT **ptr,char **buff)
 {
-    *ptr = local_buff;
+    *ptr = local_buff_info;
+    *buff  = local_buff;
 }
