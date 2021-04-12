@@ -39,7 +39,7 @@ void Force_Servo_Comm_Init(void)
     circle_buff_res_info->element_length = sizeof(FORCE_BACK_INFO_t);
     circle_buff_res_info->buff_length = MESAGE_BUFF_LENGTH;
     circle_buff_res = (char*)mmap_ptr->res_msg_ptr;
-    printf("comm init ok!\n");
+    //printf("comm init ok!\n");
 }
 
 int Force_Servo_Comm_Get_Para_UpdateFlag(void)
@@ -56,7 +56,7 @@ void Force_Servo_Comm_Set_Para_UpdateFlag(int val)
 void Force_Servo_Comm_ShakeHand_Request(void)
 {
     *((int *)mmap_ptr->comm_ptr) = MAGIC_REQ_DATA;
-    printf("shake hand!\n");
+    //printf("shake hand!\n");
 }
 
 void Force_Servo_Comm_ShakeHand_Bind(void)

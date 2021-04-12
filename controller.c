@@ -1,34 +1,77 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <pthread.h>
+#include<termios.h>;
 #include "controller.h"
 #include "force_interface.h"
 #include "string.h"
+#include "shmem_client.h"
+
 typedef buffer_info_t SERVO_COMM_RINGS_BUFF_STRUCT;
 static int line_count = 0;
 static SERVO_COMM_RINGS_BUFF_STRUCT *local_buff_info;
 static char *local_buff;
 
+static struct termios stored_settings1;
+static struct termios stored_settings2;
+
+static void echo_off(void);
+static void echo_on(void);
+static void set_keypress(void);
+
+static void echo_off(void)
+{
+   struct termios new_settings;
+   tcgetattr(0,&stored_settings1);
+   new_settings =stored_settings1;
+   new_settings.c_lflag &= (~ECHO);
+   tcsetattr(0,TCSANOW,&new_settings);
+   return;
+
+}
+
+static void echo_on(void)
+{
+  tcsetattr(0,TCSANOW,&stored_settings1);
+  return;
+}
+
+
+static void set_keypress(void)
+{
+  struct termios new_settings;
+  tcgetattr(0,&stored_settings2);
+  new_settings = stored_settings2;
+
+  /*Disable canornical mode, and set buffer size to 1 byte */
+  new_settings.c_lflag&=(~ICANON);
+  new_settings.c_cc[VTIME] = 0;
+  new_settings.c_cc[VMIN] = 1;
+
+  tcsetattr(0, TCSANOW, &new_settings);
+  return;
+
+}
+static void reset_keypress(void)
+{
+  tcsetattr(0, TCSANOW, &stored_settings2);
+  return;
+}
+
+
 static void controller_parase_cmd(char *buff, int len)
 {
     ServoCoreProcessCall_t *cmd_para = (ServoCoreProcessCall_t*)buff;
     char *ptr = buff+sizeof(ServoCoreProcessCall_t);
-    if(sizeof(ServoCoreProcessCall_t)>len
-            ||(sizeof(ServoCoreProcessCall_t)+sizeof(PARA_READ_INFO_t))>len
-            ||(sizeof(ServoCoreProcessCall_t)+sizeof(FORCE_INSTRUCTION_INFO_t))>len)
-    {
-        printf("parase para err!");
-        return;
-    }
 
-    printf("reveive cmd: %d\n",cmd_para->cmd);
+    //printf("parase cmd: %d\n",cmd_para->cmd);
     switch(cmd_para->cmd)
     {
     case CMD_ENABLE:
         Force_Servo_Comm_Cmd_Enable();
         break;
     case CMD_WORKING:
-        Force_Servo_Comm_Cmd_Enable();
+        Force_Servo_Comm_Cmd_Working();
         break;
     case CMD_IDLE:
         Force_Servo_Comm_Cmd_Idle();
@@ -141,22 +184,34 @@ static void controller_display_submode(int mode)
 void *controller_display_result(void *p)
 {
     //pthread_detach(pthread_self());
+    //set_keypress();
+    //echo_off();
     FORCE_BACK_INFO_t res;
-    int heart = Force_Servo_Comm_Get_ForceHeart();
-    int ret = Force_Servo_Comm_Get_Result(&res);
-    if(ret==-1)
+    while(1)
     {
-        pthread_yield();
+        int heart = Force_Servo_Comm_Get_ForceHeart();
+        int ret = Force_Servo_Comm_Get_Result(&res);
+        if(ret==-1)
+        {
+            pthread_yield();
+            continue;
+        }
+
+        printf("force core heart: %d\n",heart);
+        printf("err_code: %X\n",res.err_code);
+        printf("err_history[4]: %X %X %X %X\n",res.err_history[0],res.err_history[1],res.err_history[2],res.err_history[3]);
+        controller_display_state(res.state);
+        controller_display_mode(res.mode);
+        controller_display_submode(res.sub_mode);
+        line_count += 6;
+        printf("\r\033[%dA",line_count);
+        line_count = 0;
+
+        usleep(200);
+
+        bzero(&res,sizeof(FORCE_BACK_INFO_t));
     }
-    printf("force core heart: %d\n",heart);
-    printf("err_code: %X\n",res.err_code);
-    printf("err_history[4]: %X %X %X %X\n",res.err_history[0],res.err_history[1],res.err_history[2],res.err_history[3]);
-    controller_display_state(res.state);
-    controller_display_mode(res.mode);
-    controller_display_submode(res.sub_mode);
-    line_count += 6;
-    usleep(200);
-    printf("\r\033[%dA",line_count);
+
 }
 
 #define BUFF_SIZE 1024
@@ -176,12 +231,13 @@ void *controller_msg_process(void *p)
         }
         res = pull_circle_buff_item(local_buff_info,local_buff,buff);
 
-        printf("receive cmd:%d\n",*((int*)buff));
+        //printf("receive cmd:%d\n",*((int*)buff));
         if(res<0)
         {
             printf("pull_circle_buff_item error!\n");
         }
-        //controller_parase_cmd(buff,BUFF_SIZE);
+        //printf("parase!\n");
+        controller_parase_cmd(buff,BUFF_SIZE);
         bzero(buff, BUFF_SIZE);
     }
 

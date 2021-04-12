@@ -12,8 +12,8 @@
 #include <sys/shm.h>
 #include "shmem_client.h"
 
-#define  CLIENT_BUFF_SIZE 1024
-#define  MAX_SIZE 4*1024
+#define  CLIENT_BUFF_SIZE 2048
+#define  MAX_SIZE 4096
 
 
 
@@ -36,12 +36,13 @@ void shmem_init(void )
     //将共享内存连接到当前进程的地址空间
     shm_ctrl = shmat(shmid_ctrl, (void*)0, 0);
     shm_msg = shmat(shmid_msg,(void*)0,0);
+
     if(shm_ctrl == (void*)-1 || shm_msg == (void*)-1)
     {
        fprintf(stderr, "shmat failed\n");
        exit(EXIT_FAILURE);
     }
-    printf("Memory attached at 0x%X,0x%X\n", (int)shm_ctrl,(int)shm_msg);    //设置共享内存
+   // printf("Memory attached at 0x%X,0x%X\n", (int)shm_ctrl,(int)shm_msg);    //设置共享内存
     local_buff_info = (DEBUG_RINGS_BUFF_STRUCT*)shm_ctrl;
     local_buff_info->head_index_offset = 0;
     local_buff_info->tail_index_offset = 0;
@@ -49,7 +50,7 @@ void shmem_init(void )
     local_buff_info->buff_length = MAX_SIZE;
     local_buff_info->semaphore = 1;
     local_buff = (char*)shm_msg;
-    printf("shmem init ok!\n");
+    //printf("shmem init ok!\n");
 }
 
 void shmem_close(void)

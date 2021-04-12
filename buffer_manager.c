@@ -14,7 +14,7 @@ int32_t push_circle_buff_item(buffer_info_t *circle_buff_info, void *circle_buff
     }
 
     memcpy(circle_buff+circle_buff_info->tail_index_offset,push_ptr,circle_buff_info->element_length);
-    circle_buff_info->tail_index_offset = (circle_buff_info->tail_index_offset + 1)%circle_buff_info->buff_length;
+    circle_buff_info->tail_index_offset = (circle_buff_info->tail_index_offset + circle_buff_info->element_length)%circle_buff_info->buff_length;
     return circle_buff_info->element_length;
 }
 
@@ -106,13 +106,13 @@ int32_t push_circle_buff_bundle(buffer_info_t *circle_buff_info, void *circle_bu
 
 int32_t pull_circle_buff_item(buffer_info_t *circle_buff_info, void *circle_buff, void *pull_ptr)
 {
-    printf("head:%d tail:%d\n",circle_buff_info->head_index_offset, circle_buff_info->tail_index_offset);
+    //printf("head:%d tail:%d\n",circle_buff_info->head_index_offset, circle_buff_info->tail_index_offset);
     if(circle_buff_info->head_index_offset != circle_buff_info->tail_index_offset)
     {
         //printf("local_buff_info.r:%d local_buff_info.w:%d\r\n",local_buff_info.r,local_buff_info.w);
         memcpy(pull_ptr,&circle_buff[circle_buff_info->head_index_offset],circle_buff_info->element_length);
         circle_buff_info->head_index_offset = (circle_buff_info->head_index_offset+circle_buff_info->element_length)%circle_buff_info->buff_length;
-        printf("head:%d tail:%d\n",circle_buff_info->head_index_offset, circle_buff_info->tail_index_offset);
+        //printf("head:%d tail:%d\n",circle_buff_info->head_index_offset, circle_buff_info->tail_index_offset);
         return 0;
     }
     return -1;//buffer empty
