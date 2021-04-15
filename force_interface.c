@@ -68,14 +68,17 @@ void Force_Servo_Comm_ShakeHand_Bind(void)
 
 void Force_Servo_Comm_ServoHeart_Inc(void)
 {
-    *(((int *)mmap_ptr->comm_ptr)+4) = *(((int *)mmap_ptr->comm_ptr)+4) + 1;
+    *((int *)(mmap_ptr->comm_ptr+4)) = *((int *)(mmap_ptr->comm_ptr+4)) + 1;
 }
 
 int Force_Servo_Comm_Get_ForceHeart(void)
 {
-    return *(((int *)mmap_ptr->comm_ptr)+4);
+    return *((int *)(mmap_ptr->comm_ptr+8));
 }
-
+int Force_Servo_Comm_Get_ServoHeart(void)
+{
+    return *((int *)(mmap_ptr->comm_ptr+4));
+}
 static void Force_Servo_Comm_Set_Cmd(ServoCoreProcessCall_t *app)
 {
     memcpy(mmap_ptr->cmd_ptr,app,sizeof(ServoCoreProcessCall_t));

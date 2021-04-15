@@ -187,24 +187,28 @@ void *controller_display_result(void *p)
     //set_keypress();
     //echo_off();
     FORCE_BACK_INFO_t res;
+    system("clear");
     while(1)
     {
-        int heart = Force_Servo_Comm_Get_ForceHeart();
+        int force_heart = Force_Servo_Comm_Get_ForceHeart();
+        int servo_heart = Force_Servo_Comm_Get_ServoHeart();
+
         int ret = Force_Servo_Comm_Get_Result(&res);
         if(ret==-1)
         {
             pthread_yield();
             continue;
         }
-
-        printf("force core heart: %d\n",heart);
+        system("clear");
+        printf("servo core heart: %d\n",servo_heart);
+        printf("force core heart: %d\n",force_heart);
         printf("err_code: %X\n",res.err_code);
         printf("err_history[4]: %X %X %X %X\n",res.err_history[0],res.err_history[1],res.err_history[2],res.err_history[3]);
         controller_display_state(res.state);
         controller_display_mode(res.mode);
         controller_display_submode(res.sub_mode);
         line_count += 6;
-        printf("\r\033[%dA",line_count);
+        //printf("\r\033[%dA",line_count);
         line_count = 0;
 
         usleep(200);

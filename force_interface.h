@@ -267,6 +267,7 @@ extern void Force_Servo_Comm_ShakeHand_Request(void);
 extern void Force_Servo_Comm_ShakeHand_Bind(void);
 extern void Force_Servo_Comm_ServoHeart_Inc(void);
 extern int Force_Servo_Comm_Get_ForceHeart(void);
+extern int Force_Servo_Comm_Get_ServoHeart(void);
 
 extern void Force_Servo_Comm_Cmd_Enable(void);//change state from init to idle
 extern void Force_Servo_Comm_Cmd_Working(void);//change state from idle to working
