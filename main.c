@@ -10,12 +10,11 @@
 #include <sys/mman.h>           //mmap head file
 #include <unistd.h>
 #include <sys/shm.h>
-
 #include "force_interface.h"
 #include "mmap_comm.h"          //comm with force core
 #include "shmem_client.h"       //comm with server
 #include "controller.h"
-
+#include "network_client.h"
 
 static void cleanup_handler(void);
 
@@ -29,18 +28,22 @@ static void cleanup_handler(void)
 int main()
 {
     //printf("force client init!\n");
-    mmap_init();
-    shmem_init();
-    Force_Servo_Comm_Init(); 
-    atexit(cleanup_handler);
+    //mmap_init();
+    //shmem_init();
+    network_init();
+    //Force_Servo_Comm_Init();
+    //atexit(cleanup_handler);
 
     //printf("force client init ok!\n");
 
-    pthread_t tid_comm,tid_show;
-    pthread_create(&tid_comm,NULL,controller_msg_process,NULL);
-    pthread_create(&tid_show,NULL,controller_display_result,NULL);
+    pthread_t tid_comm,tid_show,tid_rcv;
 
+    pthread_create(&tid_rcv,NULL,network_producer,NULL);
+    pthread_create(&tid_comm,NULL,controller_msg_process,NULL);
+    //pthread_create(&tid_show,NULL,controller_display_result,NULL);
+
+    pthread_join(tid_rcv,NULL);
     pthread_join(tid_comm,NULL);
-    pthread_join(tid_show,NULL);
+   // pthread_join(tid_show,NULL);
     return 0;
 }

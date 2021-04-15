@@ -6,6 +6,7 @@
 #include "force_interface.h"
 #include "string.h"
 #include "shmem_client.h"
+#include "network_client.h"
 
 typedef buffer_info_t SERVO_COMM_RINGS_BUFF_STRUCT;
 static int line_count = 0;
@@ -218,31 +219,39 @@ void *controller_display_result(void *p)
 
 }
 
-#define BUFF_SIZE 1024
+#define BUFF_SIZE 2048
+static Net_Circle_Buff_t *net_ptr;
 void *controller_msg_process(void *p)
 {
     //pthread_detach(pthread_self());
     char buff[BUFF_SIZE] = {0};
-    shmem_get(&local_buff_info,&local_buff);
+    //shmem_get(&local_buff_info,&local_buff);
+    network_get(&net_ptr);
     int res = 0;
     while(1)
     {
         res = 0;
-        while(is_buff_empty(local_buff_info))
+        pthread_mutex_lock(&(net_ptr->mutex));
+        while(is_buff_empty(&(net_ptr->local_buff_info)))
         {
-            //printf("controller idle!\n");
-            pthread_yield();
+            printf("buff empty!\n");
+            pthread_cond_wait(&(net_ptr->notempty),&(net_ptr->mutex));
         }
-        res = pull_circle_buff_item(local_buff_info,local_buff,buff);
-
-        //printf("receive cmd:%d\n",*((int*)buff));
+        printf("before pull!\n");
+        res = pull_circle_buff_item(&(net_ptr->local_buff_info),&(net_ptr->local_buff),buff);
+        printf("pull! receive cmd:%d\n",*((int*)buff));
         if(res<0)
         {
             printf("pull_circle_buff_item error!\n");
         }
-        //printf("parase!\n");
-        controller_parase_cmd(buff,BUFF_SIZE);
+        pthread_mutex_unlock(&(net_ptr->mutex));
+
+        pthread_cond_signal(&(net_ptr->notfull));
+        printf("send buff not full signal!\n");
+
+        //controller_parase_cmd(buff,BUFF_SIZE);
         bzero(buff, BUFF_SIZE);
+        pthread_yield();
     }
 
     pthread_exit(0);
